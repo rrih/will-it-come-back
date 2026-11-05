@@ -78,6 +78,36 @@ function tween(ms: number, fn: (t: number) => void): Promise<void> {
 }
 
 // ---------- language ----------
+// Short label in the header pill so the title stays on one line on phones; the full names are in the menu.
+const LANG_SHORT: Record<string, string> = {
+  en: "EN", ja: "日本語", "zh-Hans": "简体", "zh-Hant": "繁體", ko: "한국어", es: "ES", "pt-BR": "PT",
+  fr: "FR", de: "DE", it: "IT", ru: "RU", tr: "TR", vi: "VI", id: "ID", hi: "हिन्दी", ar: "عربي",
+};
+
+// The long-form article is static HTML in English and Japanese; other languages load a translation on demand
+// and fall back to the English one if none exists.
+function showStaticArticle(l: "en" | "ja" | null) {
+  document.querySelectorAll<HTMLElement>("[data-lang]").forEach((el) => {
+    el.hidden = el.dataset.lang !== l;
+  });
+}
+function renderExplain(lang: Lang) {
+  const gen = $("explain-i18n");
+  if (lang === "en" || lang === "ja") {
+    gen.hidden = true;
+    gen.innerHTML = "";
+    showStaticArticle(lang);
+    return;
+  }
+  import("./explain").then(({ explainHtml }) => {
+    if (state.lang !== lang) return;
+    const html = explainHtml(lang);
+    gen.innerHTML = html ?? "";
+    gen.hidden = html == null;
+    gen.lang = lang;
+    showStaticArticle(html == null ? "en" : null);
+  });
+}
 let defaultTitle = "";
 function applyLang() {
   document.documentElement.lang = state.lang;
@@ -92,14 +122,10 @@ function applyLang() {
     el.title = s;
     el.setAttribute("aria-label", s);
   });
-  // long-form article exists in English and Japanese; other languages read the English one
-  const articleLang = state.lang === "ja" ? "ja" : "en";
-  document.querySelectorAll<HTMLElement>("[data-lang]").forEach((el) => {
-    el.hidden = el.dataset.lang !== articleLang;
-  });
+  renderExplain(state.lang);
   const sel = $<HTMLSelectElement>("lang");
   sel.value = state.lang;
-  $("lang-label").textContent = LANG_NAMES.find(([c]) => c === state.lang)?.[1] ?? "English";
+  $("lang-label").textContent = LANG_SHORT[state.lang] ?? state.lang.slice(0, 2).toUpperCase();
   ($("pic-text") as HTMLInputElement).placeholder = t("text_ph");
   ($("target-text") as HTMLInputElement).placeholder = t("text_ph");
   renderRule();
