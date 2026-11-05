@@ -99,6 +99,7 @@ function applyLang() {
   renderRule();
   updateReadout();
   updatePlayLabel();
+  requestAnimationFrame(moveIndicators);
 }
 
 // ---------- pictures ----------
@@ -137,12 +138,13 @@ function rebuild(keepStep = false) {
     morph.setup(src, dest, n);
     morph.frame(morphT);
     const moved = dest.length - stayCount(dest);
-    $("r-step").textContent = t("morph_title");
+    setStepText(t("morph_hud"));
     $("r-sub").textContent = fmt(t("morph_stat"), {
       n: moved.toLocaleString(state.lang),
-      s: (dest.length - moved).toLocaleString(state.lang),
+      t: dest.length.toLocaleString(state.lang),
     });
     $("homebar").style.width = "0";
+    $("play-ring").style.strokeDasharray = "0 100";
   } else {
     const k = keepStep ? stage.step : 0n;
     stage.setup(state.mode as Kind, src, n);
@@ -153,6 +155,7 @@ function rebuild(keepStep = false) {
   renderSizes();
   renderChips();
   renderRule();
+  requestAnimationFrame(moveIndicators);
   $("size-warn").hidden = !(n > 512);
   syncUrl();
 }
@@ -218,11 +221,12 @@ function updateReadout() {
   const isHome = r === 0n && k !== 0n;
   const total = stage.n * stage.n;
   const home = stage.home;
-  $("r-step").textContent = isHome ? `${t("back_home")} ${t("step")} ${formatBig(k, state.lang)}` : `${t("step")} ${formatBig(k, state.lang)}`;
+  setStepText(isHome ? `${t("back_home")} ${formatBig(k, state.lang)}` : `${t("step")} ${formatBig(k, state.lang)}`);
   const pct = (home / total) * 100;
   const pctS = pct >= 99.95 ? "100" : pct < 0.1 && home > 0 ? pct.toFixed(2) : pct.toFixed(1);
   $("r-sub").textContent = `${t("home_at")} ${formatBig(P, state.lang)} · ${pctS}% ${t("at_home")}`;
   $("homebar").style.width = `${pct}%`;
+  $("play-ring").style.strokeDasharray = `${pct} 100`;
   $("readout").classList.toggle("home", isHome);
   const badge = $("badge");
   badge.hidden = !isHome;
@@ -230,8 +234,90 @@ function updateReadout() {
 }
 
 function updatePlayLabel() {
-  $("b-play-l").textContent = playing ? t("pause") : t("play");
+  const label = playing ? t("pause") : t("play");
+  $("b-play-l").textContent = label;
+  $("b-play").setAttribute("aria-label", label);
+  $("b-play").title = label;
   $("b-play").classList.toggle("on", playing);
+}
+
+// ---------- motion helpers ----------
+function haptic(ms = 8) {
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    /* ignore */
+  }
+}
+
+function placeInd(container: HTMLElement, ind: HTMLElement, active: Element | null) {
+  if (!active) return;
+  const a = active as HTMLElement;
+  ind.style.width = `${a.offsetWidth}px`;
+  ind.style.transform = `translateX(${a.offsetLeft}px)`;
+  const left = a.offsetLeft - (container.clientWidth - a.offsetWidth) / 2;
+  container.scrollTo({ left, behavior: "smooth" });
+}
+
+function moveIndicators() {
+  placeInd($("tabs"), $("seg-ind"), $("tabs").querySelector(".on"));
+  const lang = document.querySelector<HTMLElement>(".lang")!;
+  placeInd(lang, lang.querySelector<HTMLElement>(".lang-ind")!, lang.querySelector(".on"));
+}
+
+let lastStepText = "";
+function setStepText(txt: string) {
+  const el = $("r-step");
+  if (txt === lastStepText) return;
+  lastStepText = txt;
+  el.textContent = txt;
+  el.classList.remove("tick");
+  void el.offsetWidth;
+  el.classList.add("tick");
+}
+
+function flashStage() {
+  const w = $("drop");
+  w.classList.remove("flash");
+  void w.offsetWidth;
+  w.classList.add("flash");
+  haptic(30);
+}
+
+function swapStage() {
+  const w = $("drop");
+  w.classList.remove("swap");
+  void w.offsetWidth;
+  w.classList.add("swap");
+}
+
+function drawThumbs() {
+  document.querySelectorAll<HTMLCanvasElement>("canvas[data-thumb]").forEach((c) => {
+    const id = c.dataset.thumb!;
+    const src = id.startsWith("t-")
+      ? targetCanvas(id.slice(2) as TargetId, state.ttext)
+      : sampleCanvas(id as SampleId, state.text);
+    const g = c.getContext("2d")!;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(src, 0, 0, c.width, c.height);
+  });
+}
+
+function setTileImage(row: HTMLElement, bmp: ImageBitmap) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 132;
+  const g = c.getContext("2d")!;
+  const m = Math.min(bmp.width, bmp.height);
+  g.drawImage(bmp, (bmp.width - m) / 2, (bmp.height - m) / 2, m, m, 0, 0, 132, 132);
+  const plus = row.querySelector<HTMLElement>(".plus")!;
+  plus.style.background = `center / cover url(${c.toDataURL("image/jpeg", 0.85)})`;
+  plus.classList.add("has-img");
+}
+
+function rangeFill(el: HTMLInputElement) {
+  const min = Number(el.min);
+  const max = Number(el.max);
+  el.style.setProperty("--fill", `${((Number(el.value) - min) / (max - min)) * 100}%`);
 }
 
 // ---------- stepping ----------
@@ -269,6 +355,7 @@ async function play() {
       const P = stage.period;
       if (stage.step % P === 0n) {
         playing = false;
+        flashStage();
         track("came_back", { mode: state.mode, n: state.n });
         break;
       }
@@ -286,6 +373,7 @@ async function single(dir: 1 | -1) {
   busy = true;
   try {
     await animateStep(dir);
+    if (stage.step !== 0n && stage.step % stage.period === 0n) flashStage();
   } finally {
     busy = false;
   }
@@ -358,6 +446,7 @@ async function loadFile(file: File | Blob, which: "pic" | "target") {
     if (which === "pic") {
       upload?.close?.();
       upload = bmp;
+      setTileImage($("pics"), bmp);
       state.pic = "upload";
       // a square PNG at a usable size is probably a scrambled picture saved here
       if (bmp.width === bmp.height && bmp.width >= 8 && bmp.width <= 1024 && (file as File).type === "image/png") {
@@ -368,6 +457,7 @@ async function loadFile(file: File | Blob, which: "pic" | "target") {
     } else {
       tupload?.close?.();
       tupload = bmp;
+      setTileImage($("targets"), bmp);
       state.target = "upload";
     }
     track("upload", { which });
@@ -469,32 +559,44 @@ function bind() {
   $("tabs").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-mode]");
     if (!b || busy) return;
+    if (state.mode === b.dataset.mode) return;
     state.mode = b.dataset.mode as Mode;
+    haptic();
     track("select_mode", { mode: state.mode });
+    const rule = $("rule");
+    rule.classList.add("fade");
     rebuild();
+    swapStage();
+    requestAnimationFrame(() => rule.classList.remove("fade"));
   });
   $("pics").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-pic]");
     if (!b || busy) return;
     state.pic = b.dataset.pic as SampleId;
     state.exact = false;
+    haptic();
     rebuild(true);
+    swapStage();
   });
   $("targets").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-target]");
     if (!b || busy) return;
     state.target = b.dataset.target as TargetId;
     morphT = 0;
+    haptic();
     rebuild();
+    swapStage();
   });
   let textTimer = 0;
   $("pic-text").addEventListener("input", (e) => {
     state.text = (e.target as HTMLInputElement).value;
+    drawThumbs();
     clearTimeout(textTimer);
     textTimer = window.setTimeout(() => !busy && rebuild(true), 250);
   });
   $("target-text").addEventListener("input", (e) => {
     state.ttext = (e.target as HTMLInputElement).value;
+    drawThumbs();
     clearTimeout(textTimer);
     textTimer = window.setTimeout(() => !busy && rebuild(true), 250);
   });
@@ -534,11 +636,21 @@ function bind() {
   });
   $("speed").addEventListener("input", (e) => {
     state.speed = parseInt((e.target as HTMLInputElement).value, 10);
+    rangeFill(e.target as HTMLInputElement);
     syncUrl();
   });
-  $("b-play").addEventListener("click", play);
-  $("b-fwd").addEventListener("click", () => single(1));
-  $("b-back").addEventListener("click", () => single(-1));
+  $("b-play").addEventListener("click", () => {
+    haptic(12);
+    play();
+  });
+  $("b-fwd").addEventListener("click", () => {
+    haptic();
+    single(1);
+  });
+  $("b-back").addEventListener("click", () => {
+    haptic();
+    single(-1);
+  });
   $("b-reset").addEventListener("click", () => jump(0n));
   $("b-home").addEventListener("click", () => {
     const P = stage.period;
@@ -547,6 +659,7 @@ function bind() {
     const floorDiv = k >= 0n ? k / P : -((-k + P - 1n) / P);
     const nextHome = (floorDiv + 1n) * P;
     jump(nextHome);
+    flashStage();
     track("jump_home", { mode: state.mode, n: state.n });
   });
   $("jump").addEventListener("submit", (e) => {
@@ -559,7 +672,7 @@ function bind() {
   $("rec-sq").addEventListener("click", () => record("square"));
   $("rec-v").addEventListener("click", () => record("vertical"));
   $("png").addEventListener("click", () => {
-    const c = state.mode === "morph" ? morph.canvas : stage.canvas;
+    const c = state.mode === "morph" ? morph.exact : stage.exact;
     c.toBlob((b) => {
       if (!b) return;
       const name = state.mode === "morph" ? `rearranged-${state.n}.png` : `${state.mode}-${state.n}-step${stage.step}.png`;
@@ -619,8 +732,24 @@ function bind() {
 ($("pic-text") as HTMLInputElement).value = state.text;
 ($("target-text") as HTMLInputElement).value = state.ttext;
 bind();
+drawThumbs();
+rangeFill($<HTMLInputElement>("speed"));
 applyLang();
 rebuild();
+window.addEventListener("resize", () => requestAnimationFrame(moveIndicators));
+{
+  let compact = false;
+  const onScroll = () => {
+    const c = window.scrollY > 60;
+    if (c !== compact) {
+      compact = c;
+      document.body.classList.toggle("compact", c);
+    }
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+}
+if (document.fonts) document.fonts.ready.then(() => moveIndicators());
 if (startK !== 0n && state.mode !== "morph") jump(startK);
 
 if ("serviceWorker" in navigator && location.hostname !== "localhost") {
