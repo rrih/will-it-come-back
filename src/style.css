@@ -111,38 +111,42 @@ svg {
 .lang {
   position: relative;
   display: flex;
-  padding: 3px;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px 0 10px;
   border-radius: 999px;
   background: var(--surface);
   border: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.lang button {
-  position: relative;
-  z-index: 1;
-  background: none;
-  border: 0;
-  padding: 5px 11px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--dim);
-  transition: color 0.3s;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.35s var(--spring);
 }
-.lang button.on {
-  color: var(--text);
+.lang:active {
+  transform: scale(0.94);
 }
-.lang-ind {
+.lang svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+.lang select {
   position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 0;
-  width: 0;
-  border-radius: 999px;
-  background: var(--surface2);
-  box-shadow: inset 0 0 0 1px var(--line2);
-  transition: transform 0.45s var(--spring), width 0.45s var(--spring);
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+  font-size: 16px;
 }
-
+.lang:focus-within {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 main {
   padding: 0 16px;
 }
@@ -478,6 +482,17 @@ main {
 /* ---------- panel ---------- */
 .panel {
   padding-bottom: 110px;
+}
+[dir="rtl"] .seg,
+[dir="rtl"] .tiles,
+[dir="rtl"] .nearby,
+[dir="rtl"] .transport,
+[dir="rtl"] .hud {
+  direction: ltr;
+}
+[dir="rtl"] .seg button,
+[dir="rtl"] .hud-pill {
+  direction: rtl;
 }
 .tagline {
   margin: 2px 2px 14px;

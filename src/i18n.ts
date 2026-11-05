@@ -1,4 +1,7 @@
-export type Lang = "en" | "ja";
+import { MORE, LANG_NAMES } from "./i18n-more";
+
+export type Lang = string;
+export { LANG_NAMES };
 
 const en = {
   tagline: "Scramble any picture with one simple rule. Keep going, and it comes back.",
@@ -14,6 +17,8 @@ const en = {
   rule_rings: "Every square ring of pixels moves one pixel clockwise. Small rings come home fast. All of them together take a while.",
   rule_morph: "Every pixel of your picture flies to a new spot to draw another picture. Nothing is added, removed or recolored.",
   step: "Step",
+  step_n: "Step {k}",
+  home_n: "Home at step {p}",
   home_at: "Home at step",
   at_home: "pixels at home",
   back_home: "Back home!",
@@ -85,6 +90,8 @@ const ja: Dict = {
   rule_rings: "四角い輪がそれぞれ時計回りに 1 マスずつ進む。小さい輪はすぐ戻るが、全部そろうまでは長い。",
   rule_morph: "あなたの絵の画素が 1 つずつ飛んで、別の絵を描く。足す画素も消す画素も、色を変える画素もない。",
   step: "手数",
+  step_n: "{k} 手目",
+  home_n: "{p} 手で元に戻る",
   home_at: "元に戻る手数",
   at_home: "の画素が元の席",
   back_home: "元に戻った！",
@@ -140,12 +147,50 @@ const ja: Dict = {
   no_mp4: "WebM で保存しました。対応していないアプリでは MP4 に変換してください。",
 };
 
-export const DICTS: Record<Lang, Dict> = { en, ja };
+export const DICTS: Record<string, Dict> = { en, ja };
+const extraTemplates: Record<string, Partial<Dict>> = {
+  "zh-Hans": { step_n: "第 {k} 步", home_n: "第 {p} 步复原" },
+  "zh-Hant": { step_n: "第 {k} 步", home_n: "第 {p} 步復原" },
+  ko: { step_n: "{k}단계", home_n: "{p}단계에서 복원" },
+  tr: { step_n: "{k}. adım", home_n: "{p}. adımda geri döner" },
+  hi: { step_n: "चरण {k}", home_n: "चरण {p} पर लौटती है" },
+};
+for (const [code, d] of Object.entries(MORE)) {
+  DICTS[code] = { ...en, step_n: `${d.step ?? en.step} {k}`, home_n: `${d.home_at ?? en.home_at} {p}`, ...d, ...(extraTemplates[code] || {}) } as Dict;
+}
+export const LANGS = LANG_NAMES.map(([c]) => c);
 export type Key = keyof Dict;
 
+const STORE = "wicb-lang";
+
+/** English unless the URL or the visitor's own earlier choice says otherwise. */
 export function detectLang(param: string | null): Lang {
-  if (param === "ja" || param === "en") return param;
-  return (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+  const norm = (v: string | null | undefined): string | null => {
+    if (!v) return null;
+    if (LANGS.includes(v)) return v;
+    const l = v.toLowerCase();
+    if (l.startsWith("zh")) return /tw|hk|mo|hant/.test(l) ? "zh-Hant" : "zh-Hans";
+    if (l.startsWith("pt")) return "pt-BR";
+    const base = l.split("-")[0];
+    return LANGS.includes(base) ? base : null;
+  };
+  const fromUrl = norm(param);
+  if (fromUrl) return fromUrl;
+  try {
+    const saved = norm(localStorage.getItem(STORE));
+    if (saved) return saved;
+  } catch {
+    /* storage blocked */
+  }
+  return "en";
+}
+
+export function saveLang(l: Lang) {
+  try {
+    localStorage.setItem(STORE, l);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function fmt(s: string, vars: Record<string, string | number>): string {

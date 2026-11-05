@@ -36,6 +36,20 @@
     <meta name="twitter:image" content="https://will-it-come-back.ro1.workers.dev/og.png" />
     <link rel="alternate" hreflang="en" href="https://will-it-come-back.ro1.workers.dev/?lang=en" />
     <link rel="alternate" hreflang="ja" href="https://will-it-come-back.ro1.workers.dev/?lang=ja" />
+    <link rel="alternate" hreflang="zh-Hans" href="https://will-it-come-back.ro1.workers.dev/?lang=zh-Hans" />
+    <link rel="alternate" hreflang="zh-Hant" href="https://will-it-come-back.ro1.workers.dev/?lang=zh-Hant" />
+    <link rel="alternate" hreflang="ko" href="https://will-it-come-back.ro1.workers.dev/?lang=ko" />
+    <link rel="alternate" hreflang="es" href="https://will-it-come-back.ro1.workers.dev/?lang=es" />
+    <link rel="alternate" hreflang="pt-BR" href="https://will-it-come-back.ro1.workers.dev/?lang=pt-BR" />
+    <link rel="alternate" hreflang="fr" href="https://will-it-come-back.ro1.workers.dev/?lang=fr" />
+    <link rel="alternate" hreflang="de" href="https://will-it-come-back.ro1.workers.dev/?lang=de" />
+    <link rel="alternate" hreflang="it" href="https://will-it-come-back.ro1.workers.dev/?lang=it" />
+    <link rel="alternate" hreflang="ru" href="https://will-it-come-back.ro1.workers.dev/?lang=ru" />
+    <link rel="alternate" hreflang="tr" href="https://will-it-come-back.ro1.workers.dev/?lang=tr" />
+    <link rel="alternate" hreflang="vi" href="https://will-it-come-back.ro1.workers.dev/?lang=vi" />
+    <link rel="alternate" hreflang="id" href="https://will-it-come-back.ro1.workers.dev/?lang=id" />
+    <link rel="alternate" hreflang="hi" href="https://will-it-come-back.ro1.workers.dev/?lang=hi" />
+    <link rel="alternate" hreflang="ar" href="https://will-it-come-back.ro1.workers.dev/?lang=ar" />
     <link rel="alternate" hreflang="x-default" href="https://will-it-come-back.ro1.workers.dev/" />
     <script type="application/ld+json">
       {
@@ -48,7 +62,7 @@
         "browserRequirements": "Requires JavaScript",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "description": "Scramble any image with a perfect shuffle (zip), Arnold's cat map, the baker's map or ring twists, and watch it come back after an exact number of steps. Rearrange the same pixels into another picture and export a video.",
-        "inLanguage": ["en", "ja"],
+        "inLanguage": ["en", "ja", "zh-Hans", "zh-Hant", "ko", "es", "pt-BR", "fr", "de", "it", "ru", "tr", "vi", "id", "hi", "ar"],
         "creator": { "@type": "Organization", "name": "Computed", "url": "https://www.youtube.com/@rrih0911" }
       }
     </script>
@@ -88,15 +102,15 @@
   <body>
     <div class="app-shell">
       <header class="top">
-        <a class="brand" href="/" aria-label="Will It Come Back? home">
+        <a class="brand" dir="ltr" href="/" aria-label="Will It Come Back? home">
           <img src="/icons/icon.svg" width="30" height="30" alt="" />
           <span>Will It Come Back<span class="q">?</span></span>
         </a>
-        <div class="lang" role="group" aria-label="Language">
-          <span class="lang-ind" aria-hidden="true"></span>
-          <button type="button" data-lang-btn="en">EN</button>
-          <button type="button" data-lang-btn="ja">日本語</button>
-        </div>
+        <label class="lang" aria-label="Language">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg>
+          <span id="lang-label">English</span>
+          <select id="lang"></select>
+        </label>
       </header>
 
       <main>

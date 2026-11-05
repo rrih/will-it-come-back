@@ -1,5 +1,5 @@
 import "./style.css";
-import { DICTS, detectLang, fmt, type Key, type Lang } from "./i18n";
+import { DICTS, LANG_NAMES, detectLang, fmt, saveLang, type Key, type Lang } from "./i18n";
 import { fixSize, formatBig, periodFor, type Kind } from "./perm";
 import { assign, stayCount } from "./rearrange";
 import { sampleCanvas, targetCanvas, toPixels, type SampleId, type TargetId } from "./samples";
@@ -78,8 +78,12 @@ function tween(ms: number, fn: (t: number) => void): Promise<void> {
 }
 
 // ---------- language ----------
+let defaultTitle = "";
 function applyLang() {
   document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+  if (!defaultTitle) defaultTitle = document.title;
+  document.title = state.lang === "en" ? defaultTitle : `Will It Come Back? · ${t("tagline")}`;
   document.querySelectorAll<HTMLElement>("[data-i]").forEach((el) => {
     el.textContent = t(el.dataset.i as Key);
   });
@@ -88,12 +92,14 @@ function applyLang() {
     el.title = s;
     el.setAttribute("aria-label", s);
   });
+  // long-form article exists in English and Japanese; other languages read the English one
+  const articleLang = state.lang === "ja" ? "ja" : "en";
   document.querySelectorAll<HTMLElement>("[data-lang]").forEach((el) => {
-    el.hidden = el.dataset.lang !== state.lang;
+    el.hidden = el.dataset.lang !== articleLang;
   });
-  document.querySelectorAll<HTMLButtonElement>("[data-lang-btn]").forEach((b) => {
-    b.classList.toggle("on", b.dataset.langBtn === state.lang);
-  });
+  const sel = $<HTMLSelectElement>("lang");
+  sel.value = state.lang;
+  $("lang-label").textContent = LANG_NAMES.find(([c]) => c === state.lang)?.[1] ?? "English";
   ($("pic-text") as HTMLInputElement).placeholder = t("text_ph");
   ($("target-text") as HTMLInputElement).placeholder = t("text_ph");
   renderRule();
@@ -221,10 +227,11 @@ function updateReadout() {
   const isHome = r === 0n && k !== 0n;
   const total = stage.n * stage.n;
   const home = stage.home;
-  setStepText(isHome ? `${t("back_home")} ${formatBig(k, state.lang)}` : `${t("step")} ${formatBig(k, state.lang)}`);
+  const kS = formatBig(k, state.lang);
+  setStepText(isHome ? `${t("back_home")} ${kS}` : fmt(t("step_n"), { k: kS }));
   const pct = (home / total) * 100;
   const pctS = pct >= 99.95 ? "100" : pct < 0.1 && home > 0 ? pct.toFixed(2) : pct.toFixed(1);
-  $("r-sub").textContent = `${t("home_at")} ${formatBig(P, state.lang)} · ${pctS}% ${t("at_home")}`;
+  $("r-sub").textContent = `${fmt(t("home_n"), { p: formatBig(P, state.lang) })} · ${pctS}% ${t("at_home")}`;
   $("homebar").style.width = `${pct}%`;
   $("play-ring").style.strokeDasharray = `${pct} 100`;
   $("readout").classList.toggle("home", isHome);
@@ -261,8 +268,6 @@ function placeInd(container: HTMLElement, ind: HTMLElement, active: Element | nu
 
 function moveIndicators() {
   placeInd($("tabs"), $("seg-ind"), $("tabs").querySelector(".on"));
-  const lang = document.querySelector<HTMLElement>(".lang")!;
-  placeInd(lang, lang.querySelector<HTMLElement>(".lang-ind")!, lang.querySelector(".on"));
 }
 
 let lastStepText = "";
@@ -504,7 +509,7 @@ async function record(shape: Shape) {
     } else {
       const P = stage.period;
       const label = () => `${name} ${formatBig(stage.step, state.lang)}`;
-      const sub = `${t("home_at")} ${formatBig(P, state.lang)}`;
+      const sub = fmt(t("home_n"), { p: formatBig(P, state.lang) });
       rec.overlay = { title: t("heading_q"), counter: label(), sub, flash: 0 };
       stage.goTo(0n);
       updateReadout();
@@ -548,14 +553,16 @@ async function record(shape: Shape) {
 
 // ---------- events ----------
 function bind() {
-  document.querySelectorAll<HTMLButtonElement>("[data-lang-btn]").forEach((b) =>
-    b.addEventListener("click", () => {
-      state.lang = b.dataset.langBtn as Lang;
-      state.langFromUrl = true;
-      applyLang();
-      rebuild(true);
-    }),
-  );
+  const langSel = $<HTMLSelectElement>("lang");
+  langSel.innerHTML = LANG_NAMES.map(([c, name]) => `<option value="${c}" lang="${c}">${name}</option>`).join("");
+  langSel.addEventListener("change", () => {
+    state.lang = langSel.value as Lang;
+    state.langFromUrl = true;
+    saveLang(state.lang);
+    track("select_lang", { lang: state.lang });
+    applyLang();
+    rebuild(true);
+  });
   $("tabs").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-mode]");
     if (!b || busy) return;
