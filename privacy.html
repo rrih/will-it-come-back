@@ -7,18 +7,23 @@
     <meta name="description" content="Privacy policy for Will It Come Back?, the in-browser image scrambler." />
     <link rel="canonical" href="https://will-it-come-back.ro1.workers.dev/privacy" />
     <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#07070c" />
+    <meta name="color-scheme" content="light dark" />
     <style>
-      body{margin:0;background:#07070c;color:#f4f4f8;font:16px/1.7 system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif}
-      main{max-width:760px;margin:0 auto;padding:24px 16px 60px}
-      a{color:#fde68a} h1{font-size:28px;line-height:1.25} h2{font-size:20px;margin-top:32px} p,li{color:rgba(244,244,248,.85)}
+      :root{--bg:#fff;--text:#09090b;--dim:#52525b;--line:#e4e4e7;--a:#4338ca}
+      @media (prefers-color-scheme:dark){:root{--bg:#0a0a0b;--text:#fafafa;--dim:#a1a1aa;--line:#232327;--a:#a5b4fc}}
+      body{margin:0;background:var(--bg);color:var(--text);font:15px/1.75 Inter,system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif;-webkit-font-smoothing:antialiased}
+      header{border-bottom:1px solid var(--line);padding:14px 20px}header a{color:var(--text);font-weight:650;text-decoration:none;display:inline-flex;gap:9px;align-items:center}
+      main{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+      a{color:var(--a)} h1{font-size:30px;line-height:1.2;letter-spacing:-.02em;margin:0 0 6px} h2{font-size:18px;margin-top:32px} p,li{color:var(--dim)}
+      .meta{font-size:13px;color:var(--dim)} hr{border:0;border-top:1px solid var(--line);margin:48px 0}
+      footer{border-top:1px solid var(--line);padding:18px 20px;font-size:13px;color:var(--dim);display:flex;gap:18px;flex-wrap:wrap}footer a{color:var(--dim)}
     </style>
   </head>
   <body>
+    <header><a href="/"><img src="/icons/icon.svg" width="22" height="22" alt="" style="border-radius:5px" />Will It Come Back?</a></header>
     <main>
-      <p><a href="/">← Will It Come Back?</a></p>
       <h1>Privacy Policy</h1>
-      <p>Last updated: November 5, 2026</p>
+      <p class="meta">Last updated: November 5, 2026</p>
       <h2>Your pictures</h2>
       <p>All image processing happens in your browser. Pictures you open, scramble, rearrange or record are never uploaded to our servers or anyone else's. Videos and PNGs you save are created on your device.</p>
       <h2>Analytics</h2>
@@ -26,10 +31,10 @@
       <h2>Advertising</h2>
       <p>This site shows ads served by Google AdSense. Google and its partners use cookies to serve ads based on your prior visits to this and other websites. You can opt out of personalized advertising in <a href="https://adssettings.google.com/" rel="noopener">Google Ads Settings</a> or at <a href="https://www.aboutads.info/" rel="noopener">www.aboutads.info</a>. Visitors in the EEA, the UK and Switzerland are asked for consent before personalized ads are shown.</p>
       <h2>Local storage</h2>
-      <p>The site may cache its own files in your browser so it works offline. Settings you choose are kept in the page address so you can share them.</p>
+      <p>The site caches its own files in your browser so it works offline. Pictures you add are kept in your browser's storage (IndexedDB) on your device only, so they are there next time; delete them from the Images panel or by clearing site data. Your language, theme and export format are remembered in local storage.</p>
       <h2>Contact</h2>
       <p>Questions: reach us on <a href="https://x.com/computedch" rel="noopener">X (@computedch)</a> or through the <a href="https://www.youtube.com/@rrih0911" rel="noopener">Computed YouTube channel</a>.</p>
-      <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:40px 0" />
+      <hr />
       <h1 lang="ja">プライバシーポリシー</h1>
       <div lang="ja">
         <p>画像の処理はすべてお使いのブラウザ内で行われ、画像がサーバーに送られることはありません。保存する動画・PNG も端末上で作られます。</p>
@@ -37,5 +42,6 @@
         <p>お問い合わせは <a href="https://x.com/computedch" rel="noopener">X（@computedch）</a> または <a href="https://www.youtube.com/@rrih0911" rel="noopener">YouTube「Computed」</a> まで。</p>
       </div>
     </main>
+    <footer><span>© 2026 Computed</span><a href="/about">About</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></footer>
   </body>
 </html>

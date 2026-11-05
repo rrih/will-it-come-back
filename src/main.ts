@@ -6,6 +6,7 @@ import { sampleCanvas, targetCanvas, toPixels, type SampleId, type TargetId } fr
 import { MorphStage, Stage } from "./stage";
 import { Recorder, download, type Shape } from "./record";
 import { track } from "./analytics";
+import { deleteImage, listImages, saveImage, type StoredImage } from "./library";
 
 type Mode = Kind | "morph";
 const MODES: Mode[] = ["zip", "cat", "knead", "rings", "morph"];
@@ -30,6 +31,9 @@ const state = {
   exact: false,
   speed: clampInt(q.get("speed"), 1, 5, 3),
   smooth: q.get("smooth") !== "0",
+  picId: "",
+  targetId: "",
+  fmt: (store("wicb-fmt") === "shorts" ? "shorts" : "youtube") as Shape,
 };
 const startK = parseStep(q.get("k") || "0") ?? 0n;
 
@@ -41,6 +45,16 @@ let morphT = 0;
 
 const stage = new Stage($<HTMLCanvasElement>("stage"));
 const morph = new MorphStage($<HTMLCanvasElement>("morph"));
+
+function store(k: string, v?: string): string | null {
+  try {
+    if (v === undefined) return localStorage.getItem(k);
+    localStorage.setItem(k, v);
+  } catch {
+    /* private mode */
+  }
+  return null;
+}
 
 function clampInt(v: string | null, lo: number, hi: number, d: number) {
   const x = v == null ? NaN : parseInt(v, 10);
@@ -131,7 +145,7 @@ function applyLang() {
   renderRule();
   updateReadout();
   updatePlayLabel();
-  requestAnimationFrame(moveIndicators);
+  renderLibrary();
 }
 
 // ---------- pictures ----------
@@ -177,6 +191,8 @@ function rebuild(keepStep = false) {
     });
     $("homebar").style.width = "0";
     $("play-ring").style.strokeDasharray = "0 100";
+    $("badge").hidden = true;
+    $("readout").classList.remove("home");
   } else {
     const k = keepStep ? stage.step : 0n;
     stage.setup(state.mode as Kind, src, n);
@@ -187,7 +203,6 @@ function rebuild(keepStep = false) {
   renderSizes();
   renderChips();
   renderRule();
-  requestAnimationFrame(moveIndicators);
   $("size-warn").hidden = !(n > 512);
   syncUrl();
 }
@@ -200,14 +215,23 @@ function renderChips() {
   document.querySelectorAll<HTMLButtonElement>("#tabs [data-mode]").forEach((b) => {
     const on = b.dataset.mode === state.mode;
     b.classList.toggle("on", on);
-    b.setAttribute("aria-selected", String(on));
+    b.setAttribute("aria-checked", String(on));
   });
   document.querySelectorAll<HTMLButtonElement>("#pics [data-pic]").forEach((b) => b.classList.toggle("on", b.dataset.pic === state.pic));
-  $("pics").querySelector(".upload")!.classList.toggle("on", state.pic === "upload");
+  document
+    .querySelectorAll<HTMLElement>("#lib [data-uid]")
+    .forEach((b) => b.classList.toggle("on", state.pic === "upload" && b.dataset.uid === state.picId));
   document
     .querySelectorAll<HTMLButtonElement>("#targets [data-target]")
     .forEach((b) => b.classList.toggle("on", b.dataset.target === state.target));
-  $("targets").querySelector(".upload")!.classList.toggle("on", state.target === "upload");
+  document
+    .querySelectorAll<HTMLElement>("#tlib [data-uid]")
+    .forEach((b) => b.classList.toggle("on", state.target === "upload" && b.dataset.uid === state.targetId));
+  document.querySelectorAll<HTMLButtonElement>("#fmt [data-fmt]").forEach((b) => {
+    const on = b.dataset.fmt === state.fmt;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-checked", String(on));
+  });
   $("pic-text").hidden = state.pic !== "text";
   $("target-text").hidden = state.target !== "text";
   $("exact-row").hidden = !(state.pic === "upload" && upload && upload.width === upload.height && upload.width <= 1024);
@@ -283,19 +307,6 @@ function haptic(ms = 8) {
   }
 }
 
-function placeInd(container: HTMLElement, ind: HTMLElement, active: Element | null) {
-  if (!active) return;
-  const a = active as HTMLElement;
-  ind.style.width = `${a.offsetWidth}px`;
-  ind.style.transform = `translateX(${a.offsetLeft}px)`;
-  const left = a.offsetLeft - (container.clientWidth - a.offsetWidth) / 2;
-  container.scrollTo({ left, behavior: "smooth" });
-}
-
-function moveIndicators() {
-  placeInd($("tabs"), $("seg-ind"), $("tabs").querySelector(".on"));
-}
-
 let lastStepText = "";
 function setStepText(txt: string) {
   const el = $("r-step");
@@ -332,17 +343,6 @@ function drawThumbs() {
     g.imageSmoothingQuality = "high";
     g.drawImage(src, 0, 0, c.width, c.height);
   });
-}
-
-function setTileImage(row: HTMLElement, bmp: ImageBitmap) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 132;
-  const g = c.getContext("2d")!;
-  const m = Math.min(bmp.width, bmp.height);
-  g.drawImage(bmp, (bmp.width - m) / 2, (bmp.height - m) / 2, m, m, 0, 0, 132, 132);
-  const plus = row.querySelector<HTMLElement>(".plus")!;
-  plus.style.background = `center / cover url(${c.toDataURL("image/jpeg", 0.85)})`;
-  plus.classList.add("has-img");
 }
 
 function rangeFill(el: HTMLInputElement) {
@@ -470,17 +470,65 @@ function toast(msg: string) {
   toastTimer = window.setTimeout(() => (el.hidden = true), 3200);
 }
 
+// ---------- library ----------
+let library: StoredImage[] = [];
+const urls = new Map<string, string>();
+function urlFor(img: StoredImage) {
+  let u = urls.get(img.id);
+  if (!u) {
+    u = URL.createObjectURL(img.blob);
+    urls.set(img.id, u);
+  }
+  return u;
+}
+
+function renderLibrary() {
+  const del = t("delete");
+  const tile = (img: StoredImage, withDel: boolean) =>
+    `<div class="tile user" data-uid="${img.id}" role="button" tabindex="0"><img src="${urlFor(img)}" alt="" draggable="false" />${
+      withDel
+        ? `<button type="button" class="del" data-del="${img.id}" aria-label="${del}" title="${del}"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>`
+        : ""
+    }</div>`;
+  $("lib").innerHTML = library.map((i) => tile(i, true)).join("");
+  $("tlib").innerHTML = library.map((i) => tile(i, false)).join("");
+  renderChips();
+}
+
+async function refreshLibrary() {
+  library = await listImages();
+  renderLibrary();
+}
+
+async function useStored(id: string, which: "pic" | "target") {
+  const img = library.find((i) => i.id === id);
+  if (!img) return;
+  await loadFile(img.blob, which, id);
+}
+
 // ---------- uploads ----------
-async function loadFile(file: File | Blob, which: "pic" | "target") {
+/** Decode a picture and use it. A new file (no id yet) is also kept in the on-device library. */
+async function loadFile(file: File | Blob, which: "pic" | "target", id = "") {
   try {
     const bmp = await createImageBitmap(file, { imageOrientation: "from-image" } as ImageBitmapOptions);
+    if (!id) {
+      const saved = await saveImage(file, bmp);
+      if (saved) {
+        id = saved.id;
+        library.unshift(saved);
+        renderLibrary();
+      }
+    }
     if (which === "pic") {
       upload?.close?.();
       upload = bmp;
-      setTileImage($("pics"), bmp);
       state.pic = "upload";
+      state.picId = id;
+      store("wicb-pic", id);
+      state.exact = false;
+      ($("exact") as HTMLInputElement).checked = false;
       // a square PNG at a usable size is probably a scrambled picture saved here
-      if (bmp.width === bmp.height && bmp.width >= 8 && bmp.width <= 1024 && (file as File).type === "image/png") {
+      if (bmp.width === bmp.height && bmp.width >= 8 && bmp.width <= 1024 && file.type === "image/png") {
         state.exact = true;
         ($("exact") as HTMLInputElement).checked = true;
         if (state.mode !== "morph" && fixSize(state.mode, bmp.width) === bmp.width) state.n = bmp.width;
@@ -488,15 +536,45 @@ async function loadFile(file: File | Blob, which: "pic" | "target") {
     } else {
       tupload?.close?.();
       tupload = bmp;
-      setTileImage($("targets"), bmp);
       state.target = "upload";
+      state.targetId = id;
+      morphT = 0;
     }
-    track("upload", { which });
-    rebuild();
+    track("upload", { which, stored: !!id });
+    rebuild(which === "pic");
+    swapStage();
   } catch {
     toast(t("load_fail"));
   }
 }
+
+// ---------- theme / install / panes ----------
+function currentTheme(): "light" | "dark" {
+  const set = document.documentElement.dataset.theme;
+  if (set === "light" || set === "dark") return set;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function setTheme(m: "light" | "dark") {
+  document.documentElement.dataset.theme = m;
+  store("wicb-theme", m);
+  document
+    .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
+    .forEach((el) => (el.content = m === "dark" ? "#0a0a0b" : "#ffffff"));
+}
+
+function showPane(name: string) {
+  document.querySelectorAll<HTMLElement>("#mtabs [data-pane]").forEach((b) => {
+    const on = b.dataset.pane === name;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-selected", String(on));
+  });
+  document
+    .querySelectorAll<HTMLElement>(".work [data-pane]:not(button)")
+    .forEach((p) => p.classList.toggle("on", p.dataset.pane === name));
+}
+
+let installEvt: (Event & { prompt: () => Promise<void> }) | null = null;
 
 // ---------- record ----------
 async function record(shape: Shape) {
@@ -596,16 +674,103 @@ function bind() {
     state.mode = b.dataset.mode as Mode;
     haptic();
     track("select_mode", { mode: state.mode });
-    const rule = $("rule");
-    rule.classList.add("fade");
     rebuild();
     swapStage();
-    requestAnimationFrame(() => rule.classList.remove("fade"));
   });
+  $("lib").addEventListener("click", async (e) => {
+    const el = e.target as HTMLElement;
+    const del = el.closest<HTMLElement>("[data-del]");
+    if (del) {
+      e.stopPropagation();
+      const id = del.dataset.del!;
+      await deleteImage(id);
+      const u = urls.get(id);
+      if (u) URL.revokeObjectURL(u);
+      urls.delete(id);
+      library = library.filter((i) => i.id !== id);
+      if (state.picId === id) {
+        state.pic = "smiley";
+        state.picId = "";
+        store("wicb-pic", "");
+        rebuild(true);
+      }
+      if (state.targetId === id) {
+        state.target = "frown";
+        state.targetId = "";
+        if (state.mode === "morph") rebuild();
+      }
+      renderLibrary();
+      return;
+    }
+    const tile = el.closest<HTMLElement>("[data-uid]");
+    if (tile && !busy) {
+      haptic();
+      useStored(tile.dataset.uid!, "pic");
+    }
+  });
+  $("tlib").addEventListener("click", (e) => {
+    const tile = (e.target as HTMLElement).closest<HTMLElement>("[data-uid]");
+    if (tile && !busy) {
+      haptic();
+      useStored(tile.dataset.uid!, "target");
+    }
+  });
+  $("mtabs").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-pane]");
+    if (b) showPane(b.dataset.pane!);
+  });
+  $("fmt").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-fmt]");
+    if (!b) return;
+    state.fmt = b.dataset.fmt as Shape;
+    store("wicb-fmt", state.fmt);
+    renderChips();
+  });
+  $("theme").addEventListener("click", () => {
+    setTheme(currentTheme() === "dark" ? "light" : "dark");
+    track("theme", { theme: currentTheme() });
+  });
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installEvt = e as typeof installEvt;
+    $("install").hidden = false;
+  });
+  $("install").addEventListener("click", async () => {
+    if (!installEvt) return;
+    $("install").hidden = true;
+    await installEvt.prompt();
+    track("install_prompt", {});
+    installEvt = null;
+  });
+  // info popovers float above the scrolling panes; place them under their icon
+  document.querySelectorAll<HTMLDetailsElement>("details.info").forEach((d) =>
+    d.addEventListener("toggle", () => {
+      if (!d.open) return;
+      const pop = d.querySelector<HTMLElement>(".pop")!;
+      const r = d.querySelector("summary")!.getBoundingClientRect();
+      const w = pop.offsetWidth;
+      const rtl = document.documentElement.dir === "rtl";
+      const x = rtl ? r.right - w + 8 : r.left - 8;
+      pop.style.left = `${Math.max(12, Math.min(innerWidth - w - 12, x))}px`;
+      pop.style.top = `${r.bottom + 6}px`;
+    }),
+  );
+  const closeInfos = () => document.querySelectorAll<HTMLDetailsElement>("details.info[open]").forEach((d) => (d.open = false));
+  window.addEventListener("scroll", closeInfos, { passive: true, capture: true });
+  window.addEventListener("resize", closeInfos);
+  // close an open info popover when tapping elsewhere
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll<HTMLDetailsElement>("details.info[open]").forEach((d) => {
+      if (!d.contains(e.target as Node)) d.open = false;
+    });
+  });
+
   $("pics").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-pic]");
     if (!b || busy) return;
     state.pic = b.dataset.pic as SampleId;
+    state.picId = "";
+    store("wicb-pic", "");
     state.exact = false;
     haptic();
     rebuild(true);
@@ -615,6 +780,7 @@ function bind() {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-target]");
     if (!b || busy) return;
     state.target = b.dataset.target as TargetId;
+    state.targetId = "";
     morphT = 0;
     haptic();
     rebuild();
@@ -702,8 +868,7 @@ function bind() {
   });
   $("m-play").addEventListener("click", () => morphTo(1));
   $("m-back").addEventListener("click", () => morphTo(0));
-  $("rec-sq").addEventListener("click", () => record("square"));
-  $("rec-v").addEventListener("click", () => record("vertical"));
+  $("rec").addEventListener("click", () => record(state.fmt));
   $("png").addEventListener("click", () => {
     const c = state.mode === "morph" ? morph.exact : stage.exact;
     c.toBlob((b) => {
@@ -769,20 +934,11 @@ drawThumbs();
 rangeFill($<HTMLInputElement>("speed"));
 applyLang();
 rebuild();
-window.addEventListener("resize", () => requestAnimationFrame(moveIndicators));
-{
-  let compact = false;
-  const onScroll = () => {
-    const c = window.scrollY > 60;
-    if (c !== compact) {
-      compact = c;
-      document.body.classList.toggle("compact", c);
-    }
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-}
-if (document.fonts) document.fonts.ready.then(() => moveIndicators());
+refreshLibrary().then(() => {
+  // reopen the picture used last time, unless the link asks for a specific one
+  const last = store("wicb-pic");
+  if (last && !q.has("pic") && library.some((i) => i.id === last)) useStored(last, "pic");
+});
 if (startK !== 0n && state.mode !== "morph") jump(startK);
 
 if ("serviceWorker" in navigator && location.hostname !== "localhost") {

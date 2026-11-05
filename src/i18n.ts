@@ -1,9 +1,10 @@
 import { MORE, LANG_NAMES } from "./i18n-more";
+import { APP_EN, APP_MORE } from "./i18n-app";
 
 export type Lang = string;
 export { LANG_NAMES };
 
-const en = {
+const en0 = {
   tagline: "Scramble any picture with one simple rule. Keep going, and it comes back.",
   privacy_note: "Your image never leaves your device.",
   mode_zip: "Zip",
@@ -74,9 +75,12 @@ const en = {
   no_mp4: "Saved as WebM. Most apps accept it; convert to MP4 if one does not.",
 };
 
+const en = { ...en0, ...APP_EN };
 type Dict = typeof en;
 
 const ja: Dict = {
+  ...APP_EN,
+  ...(APP_MORE.ja as typeof APP_EN),
   tagline: "どんな絵も、1 つの規則でぐちゃぐちゃに。続けていくと、元に戻る。",
   privacy_note: "画像は端末の外に出ません。",
   mode_zip: "ジップ",
@@ -156,7 +160,7 @@ const extraTemplates: Record<string, Partial<Dict>> = {
   hi: { step_n: "चरण {k}", home_n: "चरण {p} पर लौटती है" },
 };
 for (const [code, d] of Object.entries(MORE)) {
-  DICTS[code] = { ...en, step_n: `${d.step ?? en.step} {k}`, home_n: `${d.home_at ?? en.home_at} {p}`, ...d, ...(extraTemplates[code] || {}) } as Dict;
+  DICTS[code] = { ...en, step_n: `${d.step ?? en.step} {k}`, home_n: `${d.home_at ?? en.home_at} {p}`, ...d, ...(APP_MORE[code] || {}), ...(extraTemplates[code] || {}) } as Dict;
 }
 export const LANGS = LANG_NAMES.map(([c]) => c);
 export type Key = keyof Dict;

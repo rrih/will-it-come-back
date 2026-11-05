@@ -1,0 +1,45 @@
+// Strings added with the app-style (object-oriented) layout. Missing keys fall back to English.
+type D = Record<string, string>;
+
+export const APP_EN = {
+  images: "Images",
+  add_image: "Add image",
+  delete: "Delete",
+  stored: "Saved on this device only",
+  rules: "Rules",
+  export_title: "Export",
+  export_video: "Export video",
+  fmt_youtube: "YouTube · 16:9",
+  fmt_shorts: "Shorts · 9:16",
+  advanced: "Advanced",
+  theme: "Theme",
+  install: "Install app",
+  learn: "How it works",
+  details: "Details",
+  tab_images: "Images",
+  tab_rule: "Rule",
+  tab_export: "Export",
+  terms: "Terms",
+  about: "About",
+  more_info: "More info",
+  close: "Close",
+  privacy: "Privacy",
+};
+
+export const APP_MORE: Record<string, D> = {
+  ja: { images: "画像", add_image: "画像を追加", delete: "削除", stored: "この端末にだけ保存されます", rules: "規則", export_title: "書き出し", export_video: "動画を書き出す", fmt_youtube: "YouTube・16:9", fmt_shorts: "ショート・9:16", advanced: "詳細設定", theme: "テーマ", install: "アプリとして入れる", learn: "しくみ", details: "詳しく", tab_images: "画像", tab_rule: "規則", tab_export: "書き出し", terms: "利用規約", about: "概要", more_info: "説明", close: "閉じる", privacy: "プライバシー" },
+  "zh-Hans": { images: "图片", add_image: "添加图片", delete: "删除", stored: "仅保存在此设备上", rules: "规则", export_title: "导出", export_video: "导出视频", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "高级", theme: "主题", install: "安装应用", learn: "原理", details: "详情", tab_images: "图片", tab_rule: "规则", tab_export: "导出", terms: "条款", about: "关于", more_info: "说明", close: "关闭", privacy: "隐私" },
+  "zh-Hant": { images: "圖片", add_image: "新增圖片", delete: "刪除", stored: "只儲存在此裝置上", rules: "規則", export_title: "匯出", export_video: "匯出影片", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "進階", theme: "主題", install: "安裝 App", learn: "原理", details: "詳情", tab_images: "圖片", tab_rule: "規則", tab_export: "匯出", terms: "條款", about: "關於", more_info: "說明", close: "關閉", privacy: "隱私" },
+  ko: { images: "이미지", add_image: "이미지 추가", delete: "삭제", stored: "이 기기에만 저장됩니다", rules: "규칙", export_title: "내보내기", export_video: "동영상 내보내기", fmt_youtube: "YouTube · 16:9", fmt_shorts: "쇼츠 · 9:16", advanced: "고급", theme: "테마", install: "앱 설치", learn: "원리", details: "자세히", tab_images: "이미지", tab_rule: "규칙", tab_export: "내보내기", terms: "약관", about: "소개", more_info: "설명", close: "닫기", privacy: "개인정보" },
+  es: { images: "Imágenes", add_image: "Añadir imagen", delete: "Eliminar", stored: "Solo se guarda en este dispositivo", rules: "Reglas", export_title: "Exportar", export_video: "Exportar vídeo", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Avanzado", theme: "Tema", install: "Instalar app", learn: "Cómo funciona", details: "Detalles", tab_images: "Imágenes", tab_rule: "Regla", tab_export: "Exportar", terms: "Términos", about: "Acerca de", more_info: "Info", close: "Cerrar", privacy: "Privacidad" },
+  "pt-BR": { images: "Imagens", add_image: "Adicionar imagem", delete: "Excluir", stored: "Salvo só neste aparelho", rules: "Regras", export_title: "Exportar", export_video: "Exportar vídeo", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Avançado", theme: "Tema", install: "Instalar app", learn: "Como funciona", details: "Detalhes", tab_images: "Imagens", tab_rule: "Regra", tab_export: "Exportar", terms: "Termos", about: "Sobre", more_info: "Info", close: "Fechar", privacy: "Privacidade" },
+  fr: { images: "Images", add_image: "Ajouter une image", delete: "Supprimer", stored: "Enregistré uniquement sur cet appareil", rules: "Règles", export_title: "Exporter", export_video: "Exporter la vidéo", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Avancé", theme: "Thème", install: "Installer l'app", learn: "Comment ça marche", details: "Détails", tab_images: "Images", tab_rule: "Règle", tab_export: "Exporter", terms: "Conditions", about: "À propos", more_info: "Infos", close: "Fermer", privacy: "Confidentialité" },
+  de: { images: "Bilder", add_image: "Bild hinzufügen", delete: "Löschen", stored: "Nur auf diesem Gerät gespeichert", rules: "Regeln", export_title: "Export", export_video: "Video exportieren", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Erweitert", theme: "Design", install: "App installieren", learn: "So funktioniert's", details: "Details", tab_images: "Bilder", tab_rule: "Regel", tab_export: "Export", terms: "Nutzungsbedingungen", about: "Über", more_info: "Info", close: "Schließen", privacy: "Datenschutz" },
+  it: { images: "Immagini", add_image: "Aggiungi immagine", delete: "Elimina", stored: "Salvato solo su questo dispositivo", rules: "Regole", export_title: "Esporta", export_video: "Esporta video", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Avanzate", theme: "Tema", install: "Installa app", learn: "Come funziona", details: "Dettagli", tab_images: "Immagini", tab_rule: "Regola", tab_export: "Esporta", terms: "Termini", about: "Info", more_info: "Info", close: "Chiudi", privacy: "Privacy" },
+  ru: { images: "Изображения", add_image: "Добавить", delete: "Удалить", stored: "Хранится только на этом устройстве", rules: "Правила", export_title: "Экспорт", export_video: "Экспорт видео", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Дополнительно", theme: "Тема", install: "Установить", learn: "Как это работает", details: "Подробнее", tab_images: "Картинки", tab_rule: "Правило", tab_export: "Экспорт", terms: "Условия", about: "О сервисе", more_info: "Пояснение", close: "Закрыть", privacy: "Конфиденциальность" },
+  tr: { images: "Görseller", add_image: "Görsel ekle", delete: "Sil", stored: "Yalnızca bu cihazda saklanır", rules: "Kurallar", export_title: "Dışa aktar", export_video: "Video dışa aktar", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Gelişmiş", theme: "Tema", install: "Uygulamayı yükle", learn: "Nasıl çalışır", details: "Ayrıntılar", tab_images: "Görseller", tab_rule: "Kural", tab_export: "Dışa aktar", terms: "Koşullar", about: "Hakkında", more_info: "Bilgi", close: "Kapat", privacy: "Gizlilik" },
+  vi: { images: "Hình ảnh", add_image: "Thêm ảnh", delete: "Xóa", stored: "Chỉ lưu trên thiết bị này", rules: "Quy tắc", export_title: "Xuất", export_video: "Xuất video", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Nâng cao", theme: "Giao diện", install: "Cài ứng dụng", learn: "Cách hoạt động", details: "Chi tiết", tab_images: "Ảnh", tab_rule: "Quy tắc", tab_export: "Xuất", terms: "Điều khoản", about: "Giới thiệu", more_info: "Thông tin", close: "Đóng", privacy: "Quyền riêng tư" },
+  id: { images: "Gambar", add_image: "Tambah gambar", delete: "Hapus", stored: "Hanya disimpan di perangkat ini", rules: "Aturan", export_title: "Ekspor", export_video: "Ekspor video", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "Lanjutan", theme: "Tema", install: "Pasang aplikasi", learn: "Cara kerja", details: "Detail", tab_images: "Gambar", tab_rule: "Aturan", tab_export: "Ekspor", terms: "Ketentuan", about: "Tentang", more_info: "Info", close: "Tutup", privacy: "Privasi" },
+  hi: { images: "तस्वीरें", add_image: "तस्वीर जोड़ें", delete: "हटाएँ", stored: "सिर्फ़ इसी डिवाइस पर सहेजी जाती है", rules: "नियम", export_title: "एक्सपोर्ट", export_video: "वीडियो एक्सपोर्ट करें", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "उन्नत", theme: "थीम", install: "ऐप इंस्टॉल करें", learn: "यह कैसे काम करता है", details: "विवरण", tab_images: "तस्वीरें", tab_rule: "नियम", tab_export: "एक्सपोर्ट", terms: "शर्तें", about: "परिचय", more_info: "जानकारी", close: "बंद करें", privacy: "गोपनीयता" },
+  ar: { images: "الصور", add_image: "أضف صورة", delete: "حذف", stored: "تُحفظ على هذا الجهاز فقط", rules: "القواعد", export_title: "تصدير", export_video: "تصدير فيديو", fmt_youtube: "YouTube · 16:9", fmt_shorts: "Shorts · 9:16", advanced: "متقدم", theme: "المظهر", install: "ثبّت التطبيق", learn: "كيف يعمل", details: "التفاصيل", tab_images: "الصور", tab_rule: "القاعدة", tab_export: "تصدير", terms: "الشروط", about: "حول", more_info: "معلومات", close: "إغلاق", privacy: "الخصوصية" },
+};

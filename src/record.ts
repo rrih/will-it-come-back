@@ -1,6 +1,6 @@
 // Records a composed canvas (picture + counter + caption) with MediaRecorder.
 
-export type Shape = "square" | "vertical";
+export type Shape = "youtube" | "shorts";
 
 export interface Overlay {
   title: string; // top caption
@@ -38,8 +38,8 @@ export class Recorder {
     private source: HTMLCanvasElement,
     readonly shape: Shape,
   ) {
-    this.canvas.width = 1080;
-    this.canvas.height = shape === "square" ? 1080 : 1920;
+    this.canvas.width = shape === "youtube" ? 1920 : 1080;
+    this.canvas.height = shape === "youtube" ? 1080 : 1920;
     this.g = this.canvas.getContext("2d", { alpha: false })!;
   }
 
@@ -48,7 +48,7 @@ export class Recorder {
     if (!mime) return false;
     this.mime = mime;
     const stream = this.canvas.captureStream(60);
-    this.rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12_000_000 });
+    this.rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16_000_000 });
     this.chunks = [];
     this.rec.ondataavailable = (e) => e.data.size && this.chunks.push(e.data);
     const loop = () => {
@@ -76,49 +76,73 @@ export class Recorder {
     const { g, canvas } = this;
     const W = canvas.width;
     const H = canvas.height;
-    g.fillStyle = "#07070c";
+    const F = `Inter, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans", sans-serif`;
+    const bg = g.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#0b0b12");
+    bg.addColorStop(1, "#05050a");
+    g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
-    const vertical = this.shape === "vertical";
-    const pic = vertical ? 1000 : 820;
-    const px = (W - pic) / 2;
-    const py = vertical ? 420 : 120;
-    // caption
-    g.textAlign = "center";
+    const accent = "#a5b4fc";
+    const home = "#34d399";
+    const flash = this.overlay.flash;
     g.textBaseline = "alphabetic";
-    g.fillStyle = "#ffffff";
-    g.font = `800 ${vertical ? 76 : 54}px system-ui, -apple-system, "Segoe UI", sans-serif`;
-    if (this.overlay.title) g.fillText(this.overlay.title, W / 2, vertical ? 300 : 88, W - 80);
-    // picture
-    g.imageSmoothingEnabled = false;
-    g.drawImage(this.source, px, py, pic, pic);
-    if (this.overlay.flash > 0) {
-      g.strokeStyle = `rgba(250,204,21,${this.overlay.flash})`;
-      g.lineWidth = 10;
-      g.strokeRect(px - 8, py - 8, pic + 16, pic + 16);
-    }
-    // counter
-    const cy = py + pic + (vertical ? 150 : 0);
-    if (vertical) {
-      g.fillStyle = "#facc15";
-      g.font = `900 110px system-ui, -apple-system, "Segoe UI", sans-serif`;
-      g.fillText(this.overlay.counter, W / 2, cy, W - 80);
-      g.fillStyle = "rgba(255,255,255,0.75)";
-      g.font = `600 48px system-ui, -apple-system, "Segoe UI", sans-serif`;
-      g.fillText(this.overlay.sub, W / 2, cy + 80, W - 80);
-    } else {
-      g.fillStyle = "#facc15";
-      g.font = `900 56px system-ui, -apple-system, "Segoe UI", sans-serif`;
+    if (this.shape === "youtube") {
+      // picture on the left, text column on the right
+      const pic = 940;
+      const px = 90;
+      const py = (H - pic) / 2;
+      this.drawPic(px, py, pic, flash, home);
+      const x = px + pic + 90;
+      const w = W - x - 90;
       g.textAlign = "left";
-      g.fillText(this.overlay.counter, px, py + pic + 76, pic * 0.6);
-      g.textAlign = "right";
-      g.fillStyle = "rgba(255,255,255,0.75)";
-      g.font = `600 30px system-ui, -apple-system, "Segoe UI", sans-serif`;
-      g.fillText(this.overlay.sub, px + pic, py + pic + 70, pic * 0.45);
+      g.fillStyle = "rgba(255,255,255,0.6)";
+      g.font = `600 40px ${F}`;
+      g.fillText(this.overlay.title, x, 420, w);
+      g.fillStyle = flash > 0 ? home : "#ffffff";
+      g.font = `800 112px ${F}`;
+      g.fillText(this.overlay.counter, x, 570, w);
+      g.fillStyle = accent;
+      g.font = `600 40px ${F}`;
+      g.fillText(this.overlay.sub, x, 650, w);
+      g.fillStyle = "rgba(255,255,255,0.4)";
+      g.font = `500 28px ${F}`;
+      g.fillText(SITE_LABEL, x, H - 110, w);
+    } else {
+      const pic = 960;
+      const px = (W - pic) / 2;
+      const py = 440;
       g.textAlign = "center";
+      g.fillStyle = "#ffffff";
+      g.font = `800 76px ${F}`;
+      g.fillText(this.overlay.title, W / 2, 320, W - 100);
+      this.drawPic(px, py, pic, flash, home);
+      g.fillStyle = flash > 0 ? home : "#ffffff";
+      g.font = `800 112px ${F}`;
+      g.fillText(this.overlay.counter, W / 2, py + pic + 170, W - 100);
+      g.fillStyle = accent;
+      g.font = `600 46px ${F}`;
+      g.fillText(this.overlay.sub, W / 2, py + pic + 250, W - 100);
+      g.fillStyle = "rgba(255,255,255,0.4)";
+      g.font = `500 36px ${F}`;
+      g.fillText(SITE_LABEL, W / 2, H - 140);
     }
-    g.fillStyle = "rgba(255,255,255,0.45)";
-    g.font = `600 ${vertical ? 38 : 26}px system-ui, -apple-system, "Segoe UI", sans-serif`;
-    g.fillText(SITE_LABEL, W / 2, H - (vertical ? 120 : 26));
+  }
+
+  private drawPic(x: number, y: number, s: number, flash: number, color: string) {
+    const g = this.g;
+    const r = 36;
+    g.save();
+    g.beginPath();
+    g.roundRect(x, y, s, s, r);
+    g.clip();
+    g.imageSmoothingEnabled = false;
+    g.drawImage(this.source, x, y, s, s);
+    g.restore();
+    g.lineWidth = flash > 0 ? 10 : 2;
+    g.strokeStyle = flash > 0 ? color : "rgba(255,255,255,0.12)";
+    g.beginPath();
+    g.roundRect(x, y, s, s, r);
+    g.stroke();
   }
 }
 

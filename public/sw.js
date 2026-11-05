@@ -1,5 +1,5 @@
 // Network first for pages, cache first for built assets. Works offline after one visit.
-const CACHE = "wicb-v1";
+const CACHE = "wicb-v2";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icons/icon.svg"])));
   self.skipWaiting();

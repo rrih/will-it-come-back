@@ -341,4 +341,6 @@
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
+  <url><loc>https://will-it-come-back.ro1.workers.dev/terms</loc></url>
+  <url><loc>https://will-it-come-back.ro1.workers.dev/about</loc></url>
 </urlset>
