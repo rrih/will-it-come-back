@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Will It Come Back? Scramble Any Image With Math and Watch It Return</title>
+    <meta
+      name="description"
+      content="Upload any picture and scramble it with one simple rule: zip it like a zipper, Arnold's cat map, baker's kneading or ring twists. Keep going and it comes back. See the exact step it returns, rearrange its pixels into another picture, and save a video. Free, runs in your browser."
+    />
+    <link rel="canonical" href="https://will-it-come-back.ro1.workers.dev/" />
+    <meta name="theme-color" content="#07070c" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Come Back?" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Will It Come Back?" />
+    <meta property="og:title" content="Will It Come Back? Scramble any image with math and watch it return" />
+    <meta property="og:description" content="Zip, knead or cat-map your own picture. It turns to noise, then comes back. Find the exact step, and save a video." />
+    <meta property="og:url" content="https://will-it-come-back.ro1.workers.dev/" />
+    <meta property="og:image" content="https://will-it-come-back.ro1.workers.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@computedch" />
+    <meta name="twitter:title" content="Will It Come Back? Scramble any image with math" />
+    <meta name="twitter:description" content="Zip, knead or cat-map your own picture. It turns to noise, then comes back." />
+    <meta name="twitter:image" content="https://will-it-come-back.ro1.workers.dev/og.png" />
+    <link rel="alternate" hreflang="en" href="https://will-it-come-back.ro1.workers.dev/?lang=en" />
+    <link rel="alternate" hreflang="ja" href="https://will-it-come-back.ro1.workers.dev/?lang=ja" />
+    <link rel="alternate" hreflang="x-default" href="https://will-it-come-back.ro1.workers.dev/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Will It Come Back?",
+        "url": "https://will-it-come-back.ro1.workers.dev/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Scramble any image with a perfect shuffle (zip), Arnold's cat map, the baker's map or ring twists, and watch it come back after an exact number of steps. Rearrange the same pixels into another picture and export a video.",
+        "inLanguage": ["en", "ja"],
+        "creator": { "@type": "Organization", "name": "Computed", "url": "https://www.youtube.com/@rrih0911" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why does a scrambled image come back?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Each rule only moves pixels around, so every pixel travels in a loop. When the step count is a multiple of every loop length at once (their least common multiple), all pixels are home and the picture returns exactly."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How many zips does it take for a 1024×1024 image to come back?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "10. A perfect out-shuffle of 1024 rows sends row r to row 2r modulo 1023, and 2^10 = 1024 is 1 more than 1023. A 1022×1022 image needs 340 zips, a 1000×1000 image needs 36."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is my image uploaded anywhere?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Everything runs in your browser. The picture never leaves your device."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/" aria-label="Will It Come Back? home">
+        <img src="/icons/icon.svg" width="34" height="34" alt="" />
+        <span>Will It Come Back<span class="q">?</span></span>
+      </a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang-btn="en">EN</button>
+        <button type="button" data-lang-btn="ja">日本語</button>
+      </div>
+    </header>
+
+    <main>
+      <p class="tagline" data-i="tagline"></p>
+
+      <section class="app" aria-label="Image scrambler">
+        <div class="stage-card">
+          <div class="stage-wrap" id="drop">
+            <canvas id="stage" width="256" height="256" aria-label="Your picture"></canvas>
+            <canvas id="morph" width="256" height="256" hidden aria-label="Your picture"></canvas>
+            <div class="badge" id="badge" hidden></div>
+            <div class="dropmask" id="dropmask" data-i="drop_hint"></div>
+          </div>
+          <div class="readout" id="readout" aria-live="polite">
+            <div class="big"><span id="r-step">0</span></div>
+            <div class="small" id="r-sub"></div>
+          </div>
+          <div class="bar"><div id="homebar"></div></div>
+          <div class="transport" id="transport">
+            <button type="button" class="ic" id="b-reset" data-t="reset" aria-label="Start">⏮</button>
+            <button type="button" class="ic" id="b-back" data-t="step_back" aria-label="Back one step">◀</button>
+            <button type="button" class="play" id="b-play"><span id="b-play-l" data-i="play"></span></button>
+            <button type="button" class="ic" id="b-fwd" data-t="step_fwd" aria-label="Forward one step">▶</button>
+            <button type="button" class="pill" id="b-home" data-i="jump_home"></button>
+          </div>
+          <div class="transport" id="morph-transport" hidden>
+            <button type="button" class="play" id="m-play" data-i="morph_play"></button>
+            <button type="button" class="pill" id="m-back" data-i="morph_back"></button>
+          </div>
+          <p class="privacy">🔒 <span data-i="privacy_note"></span></p>
+        </div>
+
+        <div class="panel">
+          <div class="tabs" role="tablist" id="tabs">
+            <button role="tab" data-mode="zip" data-i="mode_zip"></button>
+            <button role="tab" data-mode="cat" data-i="mode_cat"></button>
+            <button role="tab" data-mode="knead" data-i="mode_knead"></button>
+            <button role="tab" data-mode="rings" data-i="mode_rings"></button>
+            <button role="tab" data-mode="morph" data-i="mode_morph" class="hot"></button>
+          </div>
+          <p class="rule" id="rule"></p>
+
+          <div class="group">
+            <h3 data-i="picture"></h3>
+            <div class="chips" id="pics">
+              <button type="button" data-pic="smiley" data-i="smiley"></button>
+              <button type="button" data-pic="wink" data-i="wink"></button>
+              <button type="button" data-pic="cat" data-i="cat"></button>
+              <button type="button" data-pic="text" data-i="text"></button>
+              <label class="upload"><input type="file" id="file" accept="image/*" hidden /><span data-i="upload"></span></label>
+            </div>
+            <input type="text" id="pic-text" class="text" maxlength="24" value="HELLO" hidden />
+            <label class="check" id="exact-row" hidden><input type="checkbox" id="exact" /> <span data-i="exact"></span></label>
+          </div>
+
+          <div class="group" id="target-group" hidden>
+            <h3 data-i="target"></h3>
+            <div class="chips" id="targets">
+              <button type="button" data-target="frown" data-i="frown"></button>
+              <button type="button" data-target="heart" data-i="heart"></button>
+              <button type="button" data-target="star" data-i="star"></button>
+              <button type="button" data-target="smiley" data-i="smiley"></button>
+              <button type="button" data-target="text" data-i="text"></button>
+              <label class="upload"><input type="file" id="tfile" accept="image/*" hidden /><span data-i="upload"></span></label>
+            </div>
+            <input type="text" id="target-text" class="text" maxlength="24" value="WOW" hidden />
+          </div>
+
+          <div class="group">
+            <h3><span data-i="size"></span> <small data-i="size_hint"></small></h3>
+            <div class="sizes">
+              <select id="size" aria-label="Size"></select>
+              <input type="number" id="size-custom" min="8" max="1024" step="1" aria-label="Custom size" />
+            </div>
+            <p class="warn" id="size-warn" hidden data-i="too_big"></p>
+            <div id="nearby-wrap">
+              <p class="mini" data-i="nearby"></p>
+              <div class="nearby" id="nearby"></div>
+            </div>
+          </div>
+
+          <div class="group" id="steps-group">
+            <div class="row">
+              <label class="check"><input type="checkbox" id="smooth" checked /> <span data-i="smooth"></span></label>
+            </div>
+            <div class="row">
+              <span data-i="speed"></span>
+              <input type="range" id="speed" min="1" max="5" value="3" />
+            </div>
+            <form class="row" id="jump">
+              <input type="text" id="jump-k" inputmode="numeric" placeholder="10^30" aria-label="Step" />
+              <button type="submit" class="pill" data-i="go"></button>
+            </form>
+          </div>
+
+          <div class="group">
+            <h3 data-i="export"></h3>
+            <div class="chips">
+              <button type="button" class="act" id="rec-sq"><span data-i="record"></span> · <span data-i="square"></span></button>
+              <button type="button" class="act" id="rec-v"><span data-i="record"></span> · <span data-i="vertical"></span></button>
+              <button type="button" id="png" data-i="save_png"></button>
+              <button type="button" id="share" data-i="copy_link"></button>
+            </div>
+          </div>
+
+          <details class="secret">
+            <summary data-i="secret_title"></summary>
+            <p data-i="secret_body"></p>
+          </details>
+        </div>
+      </section>
+
+      <div class="toast" id="toast" role="status" hidden></div>
+
+      <article class="explain" data-lang="en">
+        <h2>Why does a scrambled picture come back?</h2>
+        <p>
+          Every rule here only <em>moves</em> pixels. No pixel is created, destroyed or recolored. So if you follow one pixel, it hops from
+          spot to spot and, because there are only so many spots, it must eventually land where it started. Every pixel travels in its own
+          loop.
+        </p>
+        <p>
+          The whole picture is back when every loop finishes at the same moment. That happens at the least common multiple of all the loop
+          lengths. This page finds every loop in your picture and computes that number exactly, even when it has hundreds of digits.
+        </p>
+        <h2>The zip: 1024 comes back in 10, 1022 needs 340</h2>
+        <p>
+          A zip is a perfect shuffle of rows, then of columns. With 1024 rows, row <i>r</i> moves to row 2<i>r</i> (counting modulo 1023). After
+          10 zips every row has been doubled 10 times, and 2<sup>10</sup> = 1024 is exactly 1 more than 1023, so everyone is home. Halfway
+          there, at 5 zips, the picture becomes 1,024 tiny copies of itself.
+        </p>
+        <p>
+          Take two rows away and the story changes completely. 1022 needs 340 zips, 1000 needs 36, and 1026 needs 20. Try the size box and
+          the table under it: the number of steps jumps around wildly between neighbours.
+        </p>
+        <h2>Arnold's cat map and the baker's map</h2>
+        <p>
+          The cat map shears the square and wraps it around like a torus. The baker's map squashes, stretches and stacks, like kneading
+          dough. Both are textbook examples of chaos: nearby pixels fly apart fast and the picture turns to noise within a few steps. Yet
+          because the grid is finite, both must come back. A 101×101 cat comes back after 25 steps. A 1000×1000 knead takes about
+          2.13 × 10<sup>253</sup>.
+        </p>
+        <h2>Ring twist</h2>
+        <p>
+          Every square ring moves one pixel clockwise. The outer ring of a 64×64 picture has 252 pixels, the next 244, and so on. Each ring
+          is home after its own length, but all of them together need the least common multiple: about 7.38 × 10<sup>25</sup> steps.
+        </p>
+        <h2>Rearrange: the same pixels, a different picture</h2>
+        <p>
+          Pick a target and watch every pixel of your picture fly to a new place. Dark pixels go where the target is dark, bright ones
+          where it is bright, then nearby pairs swap if that brings both colors closer. It is still the very same set of pixels, so it can
+          always fly back.
+        </p>
+        <h2>Send a secret picture</h2>
+        <p>
+          Scramble a photo to step <i>k</i> and save the PNG. Anyone who knows the rule, the size and <i>k</i> can turn it back: open it with “Use
+          exact pixels”, then step backward <i>k</i> times. It is a fun puzzle, not real encryption.
+        </p>
+        <h2>Watch the videos</h2>
+        <ul class="videos">
+          <li><a href="https://www.youtube.com/watch?v=5Koi1DRwRUM" rel="noopener" target="_blank">I Zipped a Smiley 5 Times and Got 1,024 Smileys. 5 More and It Was One Again.</a></li>
+          <li><a href="https://www.youtube.com/watch?v=Dd8sWlP-j5U" rel="noopener" target="_blank">Nothing Was Lost (Arnold's cat map on a picture of balls)</a></li>
+          <li><a href="https://www.youtube.com/watch?v=1n84oxa9tkM" rel="noopener" target="_blank">I Kneaded 1,048,576 Balls 20 Times. The Smiley Came Back From the Side.</a></li>
+          <li><a href="https://www.youtube.com/watch?v=pOpMOmPZ68g" rel="noopener" target="_blank">A smiley of 16,384 balls. What else can the same balls become?</a></li>
+        </ul>
+        <p>Made by <a href="https://www.youtube.com/@rrih0911" rel="noopener" target="_blank">Computed on YouTube</a>.</p>
+      </article>
+
+      <article class="explain" data-lang="ja" hidden>
+        <h2>ぐちゃぐちゃの絵は、なぜ元に戻る？</h2>
+        <p>
+          ここにある規則はどれも画素を<em>動かす</em>だけです。新しく作る画素も、消す画素も、色を変える画素もありません。1 つの画素を追いかけると、席から席へ跳んでいき、席の数は限られているので、いつか必ず出発した席に戻ってきます。どの画素も、自分の輪を回っています。
+        </p>
+        <p>
+          絵全体が戻るのは、すべての輪が同時に 1 周し終えたときです。それは輪の長さの最小公倍数の手数です。このページは絵の中の輪をすべて見つけ、その数を正確に計算します。何百桁になってもです。
+        </p>
+        <h2>ジップ: 1024 は 10 回、1022 は 340 回</h2>
+        <p>
+          ジップは行の完全シャッフル、次に列の完全シャッフルです。1024 行なら <i>r</i> 行目は 2<i>r</i> 行目（1023 で割った余り）へ移ります。10 回で全員が 10 回 2 倍され、2<sup>10</sup> = 1024 は 1023 よりちょうど 1 大きいので、全員が元の席に戻ります。半分の 5 回目では、絵は自分の小さな複製 1,024 個になります。
+        </p>
+        <p>
+          2 行減らすだけで話はまったく変わります。1022 は 340 回、1000 は 36 回、1026 は 20 回。大きさの欄と、その下の表で試してください。隣どうしの大きさでも手数は大きく飛びます。
+        </p>
+        <h2>アーノルドの猫写像とパン屋の変換</h2>
+        <p>
+          猫写像は正方形を斜めにずらし、ドーナツのように端をつなげます。パン屋の変換はつぶして伸ばして重ねる、生地をこねる動きです。どちらもカオスの教科書的な例で、近い画素はすぐに離れ、数手で絵は砂嵐になります。それでもマス目が有限なので、必ず戻ります。101×101 の猫は 25 手、1000×1000 のこねは約 2.13 × 10<sup>253</sup> 手です。
+        </p>
+        <h2>輪の回転</h2>
+        <p>
+          四角い輪がそれぞれ時計回りに 1 マス進みます。64×64 の一番外の輪は 252 画素、次は 244 画素…。輪はそれぞれ自分の長さで戻りますが、全部そろうのは最小公倍数、約 7.38 × 10<sup>25</sup> 手です。
+        </p>
+        <h2>並べ替え: 同じ画素で、別の絵</h2>
+        <p>
+          目標の絵を選ぶと、あなたの絵の画素がすべて新しい場所へ飛びます。暗い画素は目標の暗い所へ、明るい画素は明るい所へ。そのあと近くの 2 つを入れ替えて色が近づくなら入れ替えます。同じ画素の集まりのままなので、いつでも飛んで戻れます。
+        </p>
+        <h2>秘密の絵を送る</h2>
+        <p>
+          写真を <i>k</i> 手目までぐちゃぐちゃにして PNG を保存します。規則・大きさ・<i>k</i> を知っている人なら戻せます。「画素をそのまま使う」で開き、<i>k</i> 手戻すだけです。本物の暗号ではなく、遊びのパズルです。
+        </p>
+        <h2>動画で見る</h2>
+        <ul class="videos">
+          <li><a href="https://www.youtube.com/watch?v=5Koi1DRwRUM" rel="noopener" target="_blank">スマイルを 5 回ジップしたら 1,024 個のスマイル、あと 5 回で 1 つに戻った</a></li>
+          <li><a href="https://www.youtube.com/watch?v=Dd8sWlP-j5U" rel="noopener" target="_blank">何も失われていなかった（玉の絵にアーノルドの猫写像）</a></li>
+          <li><a href="https://www.youtube.com/watch?v=1n84oxa9tkM" rel="noopener" target="_blank">1,048,576 個の玉を 20 回こねたら、スマイルが横から戻ってきた</a></li>
+          <li><a href="https://www.youtube.com/watch?v=pOpMOmPZ68g" rel="noopener" target="_blank">16,384 個の玉で作ったスマイル。同じ玉で、ほかに何になれる？</a></li>
+        </ul>
+        <p>制作: <a href="https://www.youtube.com/@rrih0911" rel="noopener" target="_blank">YouTube の Computed</a></p>
+      </article>
+    </main>
+
+    <footer class="foot">
+      <a href="/privacy.html">Privacy</a>
+      <span>·</span>
+      <a href="https://www.youtube.com/@rrih0911" rel="noopener" target="_blank">YouTube</a>
+      <span>·</span>
+      <a href="https://x.com/computedch" rel="noopener" target="_blank">X</a>
+      <span>·</span>
+      <span>© Computed</span>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
